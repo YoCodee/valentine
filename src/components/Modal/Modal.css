@@ -1,0 +1,278 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 100;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 101;
+  min-width: 320px;
+  max-width: 90vw;
+
+  /* MINECRAFT STYLE CONTAINER */
+  background-color: #c6c6c6;
+  border: 4px solid #282828; /* Dark border */
+  box-shadow:
+    inset 4px 4px 0px #ffffff,
+    /* Light Top-Left */ inset -4px -4px 0px #555555,
+    /* Dark Bottom-Right */ 8px 8px 0px rgba(0, 0, 0, 0.4); /* Hard shadow drop */
+
+  padding: 6px; /* Inner spacing between border and content */
+
+  image-rendering: chat; /* Pixelated rendering */
+  font-family: "Courier New", Courier, monospace; /* Monospace/Pixel fallback */
+}
+
+.modal-header {
+  margin-bottom: 2px;
+}
+
+.modal-header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #a1a1a1; /* Slightly darker header */
+  border: 2px solid #555;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+  border-top: 2px solid #333;
+  border-left: 2px solid #333;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #3f3f3f;
+  text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.modal-close-button {
+  background: #d0d0d0;
+  border: 2px solid #222;
+  box-shadow:
+    inset 2px 2px 0px #fff,
+    inset -2px -2px 0px #555;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  color: #333;
+  transition: none; /* No smooth transition for retro feel */
+}
+
+.modal-close-button:active {
+  background: #a0a0a0;
+  box-shadow:
+    inset 2px 2px 0px #333,
+    inset -2px -2px 0px #fff;
+  transform: translateY(2px);
+}
+
+.modal-close-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.modal-body {
+  padding: 20px;
+  margin-top: 6px;
+  background: #2b2b2b; /* Dark area for text, like inventory slots or cmd */
+  color: #ffffff;
+  border: 2px solid #8b8b8b; /* Inset look */
+  border-top: 2px solid #222;
+  border-left: 2px solid #222;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* ANIMATIONS */
+.modal-enter {
+  animation: popUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+.modal-exit {
+  animation: popDown 0.2s ease-in forwards;
+}
+
+@keyframes popUp {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes popDown {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* VALENTINE INTERACTIONS */
+.valentine-button {
+  background: #ff6b9d;
+  border: 3px solid #222;
+  box-shadow:
+    inset 3px 3px 0px rgba(255, 255, 255, 0.4),
+    inset -3px -3px 0px rgba(0, 0, 0, 0.4);
+  color: #ffffff;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 12px 24px;
+  margin: 16px auto 0;
+  display: block;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: none;
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+}
+
+.valentine-button:hover {
+  background: #ff4757;
+  box-shadow:
+    inset 3px 3px 0px rgba(255, 255, 255, 0.5),
+    inset -3px -3px 0px rgba(0, 0, 0, 0.5);
+}
+
+.valentine-button:active {
+  background: #e63946;
+  box-shadow:
+    inset 3px 3px 0px rgba(0, 0, 0, 0.4),
+    inset -3px -3px 0px rgba(255, 255, 255, 0.2);
+  transform: translateY(2px);
+}
+
+.valentine-button.collected {
+  background: #888;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.valentine-quiz {
+  margin-top: 16px;
+}
+
+.valentine-quiz-option {
+  background: #d0d0d0;
+  border: 3px solid #222;
+  box-shadow:
+    inset 2px 2px 0px #fff,
+    inset -2px -2px 0px #555;
+  padding: 12px 16px;
+  margin: 8px 0;
+  cursor: pointer;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.95rem;
+  color: #333;
+  display: block;
+  width: 100%;
+  text-align: left;
+  transition: none;
+}
+
+.valentine-quiz-option:hover {
+  background: #e0e0e0;
+}
+
+.valentine-quiz-option:active,
+.valentine-quiz-option.selected {
+  background: #ff6b9d;
+  color: #fff;
+  box-shadow:
+    inset 2px 2px 0px rgba(0, 0, 0, 0.3),
+    inset -2px -2px 0px rgba(255, 255, 255, 0.3);
+}
+
+.valentine-input {
+  margin-top: 16px;
+}
+
+.valentine-input input,
+.valentine-input textarea {
+  width: 100%;
+  background: #383838;
+  border: 2px solid #8b8b8b;
+  border-top: 2px solid #222;
+  border-left: 2px solid #222;
+  border-bottom: 2px solid #555;
+  border-right: 2px solid #555;
+  color: #ffffff;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1rem;
+  padding: 10px;
+  margin-top: 8px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.valentine-input input:focus,
+.valentine-input textarea:focus {
+  border-color: #ff6b9d;
+  box-shadow: 0 0 0 2px rgba(255, 107, 157, 0.3);
+}
+
+.valentine-input textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.valentine-message {
+  text-align: center;
+  line-height: 1.8;
+  font-size: 1.05rem;
+}
+
+.valentine-message.success {
+  color: #4ade80;
+  font-weight: bold;
+  margin-top: 12px;
+}
+
+/* Confetti for final reveal */
+.confetti-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 102;
+}
