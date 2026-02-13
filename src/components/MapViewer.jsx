@@ -80,6 +80,7 @@ export default function MapViewer() {
   const [whiteOverlayOpacity, setWhiteOverlayOpacity] = useState(0);
   const [showTransitionText, setShowTransitionText] = useState(false);
   const [transitionText, setTransitionText] = useState("");
+  const [isStuckAtCheckpoint, setIsStuckAtCheckpoint] = useState(false);
 
   const handleCinematicTrigger = () => {
     // 1. Flash White
@@ -160,8 +161,15 @@ export default function MapViewer() {
     // If modal opens, mark interaction as started
     if (isModalOpen) {
       setHasInteractedAtCheckpoint(true);
+      setIsStuckAtCheckpoint(false); // Hide hint when interacting
     }
   }, [isModalOpen]);
+
+  useEffect(() => {
+    if (villagerCheckpointPassed) {
+      setIsStuckAtCheckpoint(false);
+    }
+  }, [villagerCheckpointPassed]);
 
   useEffect(() => {
     const handleWheel = (e) => {
@@ -181,8 +189,13 @@ export default function MapViewer() {
       if (!villagerCheckpointPassed && nextTarget > checkpoint) {
         // Allow going back, but not forward past checkpoint
         targetScrollProgress.current = checkpoint;
+        setIsStuckAtCheckpoint(true);
       } else {
         targetScrollProgress.current = nextTarget;
+        // If moved back significantly, hide hint
+        if (nextTarget < checkpoint - 0.05) {
+          setIsStuckAtCheckpoint(false);
+        }
       }
     };
 
@@ -224,26 +237,6 @@ export default function MapViewer() {
         <AudioButton isCinematic={isCinematic} />
         <InfoButton />
       </div>
-      <div
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          zIndex: 20,
-          background: "rgba(0,0,0,0.6)",
-          color: "white",
-          padding: "10px 20px",
-          borderRadius: "8px",
-          pointerEvents: "none",
-          transition: "opacity 0.3s ease",
-          opacity:
-            (isHoveringVillager || isHoveringChest) && !isModalOpen ? 1 : 0,
-          fontFamily: "var(--font-primary)",
-        }}
-      >
-        {isHoveringVillager && "Press Left Mouse"}
-      </div>
 
       <div
         style={{
@@ -258,6 +251,50 @@ export default function MapViewer() {
       >
         SCROLL TO EXPLORE
       </div>
+
+      {/* Checkpoint Hint - Minecraft Style */}
+      {isStuckAtCheckpoint && !isModalOpen && !isCinematic && (
+        <div
+          className="checkpoint-hint"
+          style={{
+            position: "absolute",
+            top: "20%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "#c6c6c6",
+            border: "2px solid #555555",
+            borderBottom: "4px solid #1e1e1f",
+            padding: "15px 30px",
+            zIndex: 15,
+            pointerEvents: "none",
+            boxShadow:
+              "inset 2px 2px #ffffff, inset -2px -2px #555555, 0 8px 0 rgba(0,0,0,0.3)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "5px",
+            textAlign: "center",
+            fontFamily: "'Minecraft', monospace",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "1.2rem",
+              color: "#3f3f3f",
+              textShadow: "1px 1px 0 #ffffff",
+              fontWeight: "bold",
+            }}
+          >
+            Click the Villager
+          </div>
+          <div
+            style={{
+              fontSize: "0.9rem",
+              color: "#ff5555",
+              textShadow: "1px 1px 0 #3f0000",
+            }}
+          ></div>
+        </div>
+      )}
 
       <GameCanvas
         cameraMode={cameraMode}

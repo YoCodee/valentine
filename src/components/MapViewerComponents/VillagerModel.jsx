@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo } from "react";
-import { useGLTF, useAnimations } from "@react-three/drei";
+import { useGLTF, useAnimations, Html } from "@react-three/drei";
 import { useControls } from "leva";
 import { useModalStore } from "../stores/modalStore";
 import { useProgressionStore } from "../stores/progressionStore";
@@ -84,23 +84,50 @@ function VillagerModel({
     openModal(modalTitle, modalBody, "info");
   };
 
+  const [isHovering, setIsHovering] = React.useState(false);
+
   return (
-    <primitive
-      ref={group}
-      object={clone}
-      position={position}
-      rotation={rotation}
-      scale={scale}
-      onClick={handleInteract}
-      onPointerOver={() => {
-        document.body.style.cursor = "pointer";
-        setIsHoveringVillager(true);
-      }}
-      onPointerOut={() => {
-        document.body.style.cursor = "auto";
-        setIsHoveringVillager(false);
-      }}
-    />
+    <group position={position} rotation={rotation} scale={scale}>
+      <primitive
+        ref={group}
+        object={clone}
+        position={[0, 0, 0]}
+        rotation={[0, 0, 0]}
+        scale={1}
+        onClick={handleInteract}
+        onPointerOver={() => {
+          document.body.style.cursor = "pointer";
+          setIsHoveringVillager(true);
+          setIsHovering(true);
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = "auto";
+          setIsHoveringVillager(false);
+          setIsHovering(false);
+        }}
+      />
+      {isHovering && !useModalStore.getState().isModalOpen && (
+        <Html distanceFactor={10} position={[0, 2, 0]} center>
+          <div
+            style={{
+              background: "#c6c6c6",
+              border: "2px solid #555555",
+              borderBottom: "4px solid #1e1e1f",
+              padding: "5px 10px",
+              whiteSpace: "nowrap",
+              boxShadow: "inset 2px 2px #ffffff, inset -2px -2px #555555",
+              fontFamily: "'Minecraft', monospace",
+              color: "#3f3f3f",
+              textShadow: "1px 1px 0 #ffffff",
+              fontSize: "12px",
+              pointerEvents: "none",
+            }}
+          >
+            Press Left Mouse
+          </div>
+        </Html>
+      )}
+    </group>
   );
 }
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useGLTF, useAnimations } from "@react-three/drei";
+import { useGLTF, useAnimations, Html } from "@react-three/drei";
 import { useControls } from "leva";
 import * as THREE from "three";
 
@@ -48,8 +48,6 @@ function ChestModel({ triggerOpen }) {
     setIsHoveringChest(isHovering);
   }, [isHovering, setIsHoveringChest]);
 
-
-
   // Handle external trigger (from Cinematic End)
   useEffect(() => {
     if (triggerOpen) {
@@ -94,27 +92,42 @@ function ChestModel({ triggerOpen }) {
     });
   }, [scene]);
 
- 
+  const handleInteract = () => {
+    playSound("buttonClick");
+
+    // Play Open Animation
+    if (names.length > 0) {
+      const action = actions[names[0]];
+      if (action) {
+        action.reset().fadeIn(0.1).play();
+        action.clampWhenFinished = true;
+        action.setLoop(THREE.LoopOnce, 1);
+      }
+    }
+
+    // Open Final Modal
+    openModal("A Special Question", <ConfessionModal />, "heart");
+  };
+
   return (
-    <primitive
-      ref={group}
-      object={scene}
-      position={position}
-      rotation={rotation}
-      scale={scale}
-      onClick={(e) => {
-        e.stopPropagation();
-        handleInteract();
-      }}
-      onPointerOver={() => {
-        setIsHovering(true);
-        document.body.style.cursor = "pointer";
-      }}
-      onPointerOut={() => {
-        setIsHovering(false);
-        document.body.style.cursor = "auto";
-      }}
-    />
+    <group position={position} rotation={rotation} scale={scale}>
+      <primitive
+        ref={group}
+        object={scene}
+        position={[0, 0, 0]}
+        rotation={[0, 0, 0]}
+        scale={1}
+        onPointerOver={() => {
+          setIsHovering(true);
+          document.body.style.cursor = "pointer";
+        }}
+        onPointerOut={() => {
+          setIsHovering(false);
+          document.body.style.cursor = "auto";
+        }}
+      />
+
+    </group>
   );
 }
 

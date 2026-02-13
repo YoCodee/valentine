@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useProgress } from "@react-three/drei";
+import { useAudioStore } from "../stores/audioStore";
 
 export default function LoadingScreen() {
   const { active, progress, errors, item, loaded, total } = useProgress();
@@ -34,17 +35,16 @@ export default function LoadingScreen() {
 
     const hasCriticalErrors = criticalErrors.length > 0;
 
-    // Safety: If main models are loaded (Map is usually the biggest), just finish
-    // We check if progress is high enough and no critical errors are present
+    // Safety: If main models are loaded (Map is usually the biggest), just show start button
     if ((isBasicallyDone || progress > 95) && !hasCriticalErrors) {
-      const timer = setTimeout(() => {
-        setFinished(true);
-      }, 1500);
-      return () => clearTimeout(timer);
+      setShowStartButton(true);
     }
   }, [active, progress, loaded, total, errors]);
 
+  const { setIsAudioEnabled } = useAudioStore();
+
   const handleManualEnter = () => {
+    setIsAudioEnabled(true);
     setFinished(true);
   };
 
@@ -151,23 +151,32 @@ export default function LoadingScreen() {
         </p>
       )}
 
-      {/* Manual Enter Button (Fallback) */}
+      {/* Start / Fallback Button */}
       {showStartButton && (
         <button
           onClick={handleManualEnter}
           style={{
             marginTop: "2rem",
-            background: "transparent",
-            border: "2px solid #4ade80",
-            color: "#4ade80",
-            padding: "10px 20px",
+            background: "#fff",
+            border: "none",
+            color: "#111",
+            padding: "15px 40px",
             fontFamily: "inherit",
             cursor: "pointer",
-            fontSize: "1rem",
+            fontSize: "1.2rem",
+            fontWeight: "bold",
+            borderRadius: "4px",
+            boxShadow: "0 4px 15px rgba(255,255,255,0.3)",
             animation: "pulse 2s infinite",
+            pointerEvents: "auto",
+            transition: "transform 0.2s ease, background 0.2s ease",
           }}
+          onMouseEnter={(e) => (e.target.style.transform = "scale(1.05)")}
+          onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
         >
-          FORCE ENTER (Skip Loading)
+          {percentage >= 95
+            ? "CLICK TO START ❤️"
+            : "FORCE ENTER (Skip Loading)"}
         </button>
       )}
 
