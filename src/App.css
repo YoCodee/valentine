@@ -40,3 +40,58 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Credits Styles */
+.credits-container {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none; /* Let clicks pass through if needed, but usually credits block */
+  display: flex;
+  justify-content: center;
+  align-items: flex-end; /* Start from bottom */
+  overflow: hidden;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent 30%);
+}
+
+.credits-content {
+  text-align: center;
+  color: white;
+  font-family: var(--font-primary, sans-serif);
+  animation: scrollCredits 60s linear forwards;
+  position: relative;
+  top: 100vh; /* Start below screen */
+  width: 100%;
+  max-width: 600px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.credits-content h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #ffb7c5;
+}
+
+.credits-content h2 {
+  font-size: 1.5rem;
+  margin-top: 3rem;
+  margin-bottom: 0.5rem;
+  color: #a0d8ef;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.credits-content p {
+  font-size: 1.2rem;
+  margin: 0.5rem 0;
+  color: #f0f0f0;
+}
+
+@keyframes scrollCredits {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-200%); /* Move up well past the screen */
+  }
+}

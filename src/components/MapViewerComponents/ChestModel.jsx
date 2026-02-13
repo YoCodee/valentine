@@ -4,16 +4,19 @@ import { useControls } from "leva";
 import * as THREE from "three";
 
 import { useModalStore } from "../stores/modalStore";
+import { useProgressionStore } from "../stores/progressionStore";
 import { ConfessionModal } from "./ValentineModals";
 import { playSound } from "../../utils/audioSystem";
 
-function ChestModel() {
+function ChestModel({ triggerOpen }) {
   const group = useRef();
   const { scene, animations } = useGLTF("/3d/minecraft_chest (2).glb");
   const { actions, names } = useAnimations(animations, group);
 
-  const { openModal, closeModal } = useModalStore();
-  const [hasOpenedChest, setHasOpenedChest] = useState(false);
+  const { openModal, isModalOpen } = useModalStore();
+  const { setIsHoveringChest } = useProgressionStore();
+
+  const [isHovering, setIsHovering] = useState(false);
 
   // Leva controls
   const { position, rotation, scale, playAnimation } = useControls(
@@ -28,7 +31,7 @@ function ChestModel() {
         step: 0.1,
       },
       scale: {
-        value: 1,
+        value: 0.8,
         min: 0.1,
         max: 5,
         step: 0.1,
@@ -40,20 +43,45 @@ function ChestModel() {
     },
   );
 
+  // Sync internal hover state with global store
+  useEffect(() => {
+    setIsHoveringChest(isHovering);
+  }, [isHovering, setIsHoveringChest]);
+
+
+
+  // Handle external trigger (from Cinematic End)
+  useEffect(() => {
+    if (triggerOpen) {
+      // Play Open Animation without opening modal immediately (visual only)
+      if (names.length > 0) {
+        const action = actions[names[0]];
+        if (action) {
+          action.reset().fadeIn(0.1).play();
+          action.clampWhenFinished = true;
+          action.setLoop(THREE.LoopOnce, 1);
+        }
+      }
+    }
+  }, [triggerOpen, actions, names]);
+
   // Manual animation control (Leva)
   useEffect(() => {
-    if (names.length > 0 && !hasOpenedChest) {
+    if (names.length > 0) {
       const action = actions[names[0]];
       if (action) {
         if (playAnimation) {
           action.reset().fadeIn(0.5).play();
           action.setLoop(THREE.LoopRepeat, Infinity);
         } else {
-          action.fadeOut(0.5).stop();
+          // Default state: stop
+          if (!isModalOpen) {
+            // action.stop(); // Don't force stop if we want it to stay closed/open naturally
+          }
         }
       }
     }
-  }, [actions, names, playAnimation, hasOpenedChest]);
+  }, [actions, names, playAnimation, isModalOpen]);
 
   // Shadow setup
   useEffect(() => {
@@ -66,28 +94,7 @@ function ChestModel() {
     });
   }, [scene]);
 
-  const handleClick = () => {
-    if (hasOpenedChest) return;
-
-    playSound("buttonClick");
-    setHasOpenedChest(true);
-
-    // Play "Open" animation (assuming it's at index 0 or named appropriately)
-    if (names.length > 0) {
-      const action = actions[names[0]]; // Or whatever the open animation name is
-      if (action) {
-        action.reset().fadeIn(0.2).play();
-        action.clampWhenFinished = true;
-        action.setLoop(THREE.LoopOnce, 1);
-      }
-    }
-
-    // Delay the modal appearing slightly for the animation to start
-    setTimeout(() => {
-      openModal("SPECIAL QUESTION ❓", <ConfessionModal />);
-    }, 800);
-  };
-
+ 
   return (
     <primitive
       ref={group}
@@ -97,10 +104,16 @@ function ChestModel() {
       scale={scale}
       onClick={(e) => {
         e.stopPropagation();
-        handleClick();
+        handleInteract();
       }}
-      onPointerOver={() => (document.body.style.cursor = "pointer")}
-      onPointerOut={() => (document.body.style.cursor = "auto")}
+      onPointerOver={() => {
+        setIsHovering(true);
+        document.body.style.cursor = "pointer";
+      }}
+      onPointerOut={() => {
+        setIsHovering(false);
+        document.body.style.cursor = "auto";
+      }}
     />
   );
 }

@@ -2,7 +2,13 @@ import React, { Suspense } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Environment, Sky, OrbitControls, Html } from "@react-three/drei";
 import * as THREE from "three";
-import { EffectComposer, Bloom, N8AO } from "@react-three/postprocessing";
+import {
+  EffectComposer,
+  Bloom,
+  SSAO,
+  ToneMapping,
+  BrightnessContrast,
+} from "@react-three/postprocessing";
 import { useControls, button } from "leva";
 
 import MapModel from "./MapModel";
@@ -13,36 +19,53 @@ import {
   SecretNoteOne,
   SecretNoteTwo,
   SecretNoteThree,
+  SecretNoteFour,
 } from "./ValentineModals";
 
 // Helper to convert Degrees to Radians
 const toRad = (deg) => deg * (Math.PI / 180);
 
-const Scene = ({ scrollProgress, targetScrollProgress, cameraMode }) => {
+const Scene = ({
+  scrollProgress,
+  targetScrollProgress,
+  cameraMode,
+  isCinematic,
+  isCredits, // New prop for credits mode
+  onStartCinematic,
+  onCinematicEnd, // Callback for when cinematic sequence finishes
+}) => {
   const { camera } = useThree();
+  const cinematicTime = React.useRef(0);
 
   // Listener for 'P' key to log camera position
   React.useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key.toLowerCase() === "p") {
         const { x, y, z } = camera.position;
-        // Round to 2 decimal places for cleaner output
+        const { x: rx, y: ry, z: rz } = camera.rotation;
+
+        // Round position to 2 decimal places
         const cx = x.toFixed(2);
         const cy = y.toFixed(2);
         const cz = z.toFixed(2);
 
-        console.log(`new THREE.Vector3(${cx}, ${cy}, ${cz}),`);
-        alert(`Copied to console: new THREE.Vector3(${cx}, ${cy}, ${cz})`);
+        // Convert rotation to degrees and round
+        const dx = Math.round(THREE.MathUtils.radToDeg(rx));
+        const dy = Math.round(THREE.MathUtils.radToDeg(ry));
+        const dz = Math.round(THREE.MathUtils.radToDeg(rz));
+
+        console.log(`Position: new THREE.Vector3(${cx}, ${cy}, ${cz})`);
+        console.log(`Rotation (Deg): x: ${dx}, y: ${dy}, z: ${dz}`);
+
+        alert(
+          `Logged to Console:\nPos: [${cx}, ${cy}, ${cz}]\nRot(Deg): [${dx}, ${dy}, ${dz}]`,
+        );
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [camera]);
 
-  // --- LEVA CONTROLS START ---
-  // Camera Mode is now passed from parent
-
-  // 1. Controls for Timeline Scrubbing
   const { manualScrub, debugProgress } = useControls("Timeline (Debug)", {
     manualScrub: { value: false, label: "Enable Manual Scrub" },
     debugProgress: {
@@ -54,7 +77,6 @@ const Scene = ({ scrollProgress, targetScrollProgress, cameraMode }) => {
     },
   });
 
-  // 2. Controls for Each Keyframe Rotation
   const rot0 = useControls("Keyframe 0% (Start)", {
     r0_x: { value: 0, min: -180, max: 180, step: 1 },
     r0_y: { value: 21, min: -180, max: 180, step: 1 },
@@ -90,6 +112,137 @@ const Scene = ({ scrollProgress, targetScrollProgress, cameraMode }) => {
     r80_y: { value: 69, min: -180, max: 180, step: 1 },
     r80_z: { value: 0, min: -180, max: 180, step: 1 },
   });
+
+  // --- 3. Environment & Sky Controls ---
+  const {
+    sunPosition,
+    turbidity,
+    rayleigh,
+    mieCoefficient,
+    fogColor,
+    fogNear,
+    fogFar,
+  } = useControls(
+    "Sky Environment",
+    {
+      sunPosition: { value: [100, 5, 100] },
+      turbidity: { value: 0.3, min: 0, max: 1, step: 0.01 },
+      rayleigh: { value: 3, min: 0, max: 10, step: 0.1 },
+      mieCoefficient: { value: 0.005, min: 0, max: 0.1, step: 0.001 },
+      fogColor: { value: "#ffeebb" },
+      fogNear: { value: 30, min: 0, max: 100 },
+      fogFar: { value: 200, min: 50, max: 500 },
+    },
+    { collapsed: true },
+  );
+
+  // --- 4. Lighting Controls ---
+  const { ambIntensity, ambColor, dirIntensity, dirColor, dirPos } =
+    useControls(
+      "Lighting",
+      {
+        ambIntensity: { value: 0.6, min: 0, max: 2, step: 0.1 },
+        ambColor: { value: "#fff0e6" },
+        dirIntensity: { value: 10.0, min: 0, max: 10, step: 0.1 },
+        dirColor: { value: "#ffe3c2" },
+        dirPos: { value: [80, 20, 80] },
+      },
+      { collapsed: true },
+    );
+
+  // --- 5. Post-Processing Controls ---
+  const {
+    // SSAO
+    ssaoRadius,
+    ssaoIntensity,
+    ssaoLumInfluence,
+    ssaoColor,
+    // Bloom
+    bloomThreshold,
+    bloomIntensity,
+    bloomRadius,
+    // ToneMapping
+    tmMiddleGrey,
+    tmMaxLum,
+    tmAvgLum,
+    // BrightnessContrast
+    brightness,
+    contrast,
+  } = useControls(
+    "Post-Processing",
+    {
+      // SSAO
+      ssaoRadius: {
+        value: 0.5,
+        min: 0,
+        max: 5,
+        step: 0.1,
+        label: "SSAO Radius",
+      },
+      ssaoIntensity: {
+        value: 80,
+        min: 0,
+        max: 200,
+        step: 1,
+        label: "SSAO Intensity",
+      },
+      ssaoLumInfluence: {
+        value: 0.4,
+        min: 0,
+        max: 1,
+        step: 0.01,
+        label: "SSAO Lum Infl",
+      },
+      ssaoColor: { value: "black", label: "SSAO Color" },
+
+      // Bloom
+      bloomThreshold: {
+        value: 1.2,
+        min: 0,
+        max: 3,
+        label: "Bloom Threshold",
+      },
+      bloomIntensity: {
+        value: 0.6,
+        min: 0,
+        max: 3,
+        label: "Bloom Intensity",
+      },
+      bloomRadius: {
+        value: 0.5,
+        min: 0,
+        max: 2,
+        label: "Bloom Radius",
+      },
+
+      // ToneMapping
+      tmMiddleGrey: {
+        value: 0.7,
+        min: 0,
+        max: 2,
+        label: "TM Middle Grey",
+      },
+      tmMaxLum: { value: 16.0, min: 0, max: 30, label: "TM Max Lum" },
+      tmAvgLum: { value: 0.9, min: 0, max: 5, label: "TM Avg Lum" },
+
+      // BC
+      brightness: {
+        value: 0.1,
+        min: -1,
+        max: 1,
+        step: 0.05,
+        label: "Brightness",
+      },
+      contrast: {
+        value: 0.2,
+        min: -1,
+        max: 1,
+        step: 0.05,
+        label: "Contrast",
+      },
+    },
+    { collapsed: true },
+  );
 
   const rot100 = useControls("Keyframe 100% (End)", {
     r100_x: { value: 0, min: -180, max: 180, step: 1 },
@@ -220,48 +373,152 @@ const Scene = ({ scrollProgress, targetScrollProgress, cameraMode }) => {
     return result;
   };
 
+  const [cinematicFinished, setCinematicFinished] = React.useState(false);
+
   useFrame((state, delta) => {
     // SKIP Path Logic if in Free Mode
     if (cameraMode === "Free") return;
 
-    // DEBUG MODE CHECK
-    let currentProgressValue = 0;
+    // CREDITS MODE CAMERA
+    if (isCredits) {
+      // Target Position
+      const credPos = new THREE.Vector3(21.52, -7.14, -73.89);
+      // Target Rotation (Converted from Deg: 159, 20, -173)
+      const credRot = new THREE.Euler(toRad(159), toRad(20), toRad(-173));
 
-    if (manualScrub) {
-      // Pakai Slider Leva
-      currentProgressValue = debugProgress;
-      scrollProgress.current = debugProgress; // Sync ref for smoother switch back
-    } else {
-      // Pakai Scroll Normal (Ping Pong Loop)
-      const dampSpeed = 1.5;
-
-      scrollProgress.current = THREE.MathUtils.damp(
-        scrollProgress.current,
-        targetScrollProgress.current,
-        dampSpeed,
-        delta,
+      camera.position.lerp(credPos, 0.05);
+      camera.quaternion.slerp(
+        new THREE.Quaternion().setFromEuler(credRot),
+        0.05,
       );
-
-      // PING-PONG / YOYO LOOP LOGIC
-      const cycle = 2;
-      let modulo = scrollProgress.current % cycle;
-
-      // Handle negative buffer
-      if (modulo < 0) modulo += cycle;
-
-      // Jika lebih dari 1, berarti sedang "Waktu Mundur" (1.1 -> 0.9)
-      currentProgressValue = modulo > 1 ? 2 - modulo : modulo;
+      return;
     }
 
-    // 1. Update Position based on Path
-    const basePoint = cameraCurve.getPoint(currentProgressValue);
+    if (isCinematic) {
+      cinematicTime.current += delta;
+      const sceneDuration = 8.0; // Slow scenic duration
+      const totalDuration = sceneDuration * 4; // 4 Scenes total
 
-    // 2. Update Rotation based on Manual Keyframes (Dynamic from Leva)
-    const targetQuaternion = getLerpedRotation(currentProgressValue);
+      // Clamp to end (Do not loop)
+      let t = cinematicTime.current;
+      if (t >= totalDuration) {
+        t = totalDuration;
+        if (!cinematicFinished) {
+          setCinematicFinished(true);
+          // Trigger the ending sequence (Flash + Text)
+          if (onCinematicEnd) onCinematicEnd();
+        }
+      }
 
-    // Apply directly to camera
-    camera.position.copy(basePoint);
-    camera.quaternion.copy(targetQuaternion);
+      let posStart, posEnd, rotStart, rotEnd;
+      let alpha = 0;
+
+      if (t < sceneDuration) {
+        // SCENE 1
+        posStart = new THREE.Vector3(64.12, -5.37, -15.01);
+        posEnd = new THREE.Vector3(36.97, -7.58, 49.77);
+        rotStart = new THREE.Euler(toRad(127), toRad(70), toRad(-128));
+        rotEnd = new THREE.Euler(toRad(21), toRad(32), toRad(-11));
+
+        alpha = t / sceneDuration;
+      } else if (t < sceneDuration * 2) {
+        // SCENE 2
+        posStart = new THREE.Vector3(-22.27, 6.87, -61.62);
+        posEnd = new THREE.Vector3(35.51, 6.36, -18.39);
+
+        rotStart = new THREE.Euler(toRad(175), toRad(-23), toRad(178));
+        rotEnd = new THREE.Euler(toRad(161), toRad(62), toRad(-163));
+
+        alpha = (t - sceneDuration) / sceneDuration;
+      } else if (t < sceneDuration * 3) {
+        // SCENE 3 (3 Points -> 2 Segments)
+        const localT = t - sceneDuration * 2;
+        const segmentDuration = sceneDuration / 2;
+
+        if (localT < segmentDuration) {
+          // Point 1 -> Point 2
+          posStart = new THREE.Vector3(-50.2, 12.75, -60.72);
+          posEnd = new THREE.Vector3(-65.09, 26.97, 20.31);
+          rotStart = new THREE.Euler(toRad(160), toRad(-38), toRad(167));
+          rotEnd = new THREE.Euler(toRad(5), toRad(-58), toRad(4));
+          alpha = localT / segmentDuration;
+        } else {
+          // Point 2 -> Point 3
+          posStart = new THREE.Vector3(-65.09, 26.97, 20.31);
+          posEnd = new THREE.Vector3(46.5, 20.18, 44.17);
+          rotStart = new THREE.Euler(toRad(5), toRad(-58), toRad(4));
+          rotEnd = new THREE.Euler(toRad(8), toRad(56), toRad(-7));
+          alpha = (localT - segmentDuration) / segmentDuration;
+        }
+      } else {
+        // SCENE 4 (4 Points -> 3 Segments)
+        const localT = t - sceneDuration * 3;
+        const segmentDuration = sceneDuration / 3;
+
+        if (localT < segmentDuration) {
+          // Point 1 -> Point 2
+          posStart = new THREE.Vector3(-11.34, 35.58, 0.18);
+          posEnd = new THREE.Vector3(24.57, 38.2, -0.19);
+          rotStart = new THREE.Euler(toRad(-96), toRad(84), toRad(96));
+          rotEnd = new THREE.Euler(toRad(-98), toRad(86), toRad(98));
+          alpha = localT / segmentDuration;
+        } else if (localT < segmentDuration * 2) {
+          // Point 2 -> Point 3
+          posStart = new THREE.Vector3(24.57, 38.2, -0.19);
+          posEnd = new THREE.Vector3(26.07, 17.55, -0.26);
+          rotStart = new THREE.Euler(toRad(-98), toRad(86), toRad(98));
+          rotEnd = new THREE.Euler(toRad(-98), toRad(86), toRad(98));
+          alpha = (localT - segmentDuration) / segmentDuration;
+        } else {
+          // Point 3 -> Point 4
+          posStart = new THREE.Vector3(26.07, 17.55, -0.26);
+          posEnd = new THREE.Vector3(-11.47, 15.97, -0.03);
+          rotStart = new THREE.Euler(toRad(-98), toRad(86), toRad(98));
+          rotEnd = new THREE.Euler(toRad(167), toRad(87), toRad(-167));
+          alpha = (localT - segmentDuration * 2) / segmentDuration;
+        }
+      }
+
+      // Smooth Easing
+      const smoothAlpha = THREE.MathUtils.smoothstep(alpha, 0, 1);
+
+      camera.position.lerpVectors(posStart, posEnd, smoothAlpha);
+
+      const qStart = new THREE.Quaternion().setFromEuler(rotStart);
+      const qEnd = new THREE.Quaternion().setFromEuler(rotEnd);
+      camera.quaternion.slerpQuaternions(qStart, qEnd, smoothAlpha);
+
+      return; // EXIT early so we don't do path logic
+    }
+
+    // Reset cinematic state if no longer cinematic
+    if (!isCinematic && cinematicFinished) {
+      setCinematicFinished(false);
+      cinematicTime.current = 0;
+    }
+
+    cinematicTime.current = 0;
+
+    if (manualScrub) {
+      scrollProgress.current = debugProgress;
+    } else {
+      const dampFactor = 2.0;
+      scrollProgress.current = THREE.MathUtils.lerp(
+        scrollProgress.current,
+        targetScrollProgress.current,
+        delta * dampFactor,
+      );
+    }
+
+    // Clamp 0-1
+    scrollProgress.current = Math.max(0, Math.min(1, scrollProgress.current));
+
+    // Update Camera
+    const finalPos = cameraCurve.getPointAt(scrollProgress.current);
+    const finalRot = getLerpedRotation(scrollProgress.current);
+
+    camera.position.copy(finalPos);
+    camera.quaternion.copy(finalRot);
   });
 
   return (
@@ -270,15 +527,20 @@ const Scene = ({ scrollProgress, targetScrollProgress, cameraMode }) => {
 
       <color attach="background" args={["#a1c4fd"]} />
 
-      <Sky sunPosition={[100, 10, 100]} turbidity={0.1} rayleigh={0.5} />
-      <fog attach="fog" args={["#ffffff", 30, 160]} />
+      <Sky
+        sunPosition={sunPosition}
+        turbidity={turbidity}
+        rayleigh={rayleigh}
+        mieCoefficient={mieCoefficient}
+      />
+      <fog attach="fog" args={[fogColor, fogNear, fogFar]} />
 
-      <ambientLight intensity={1.2} color="#ffffff" />
+      <ambientLight intensity={ambIntensity} color={ambColor} />
       <directionalLight
         castShadow
-        position={[50, 40, 50]}
-        intensity={2.5}
-        color="#fff5e6"
+        position={dirPos}
+        intensity={dirIntensity}
+        color={dirColor}
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-bias={-0.0001}
@@ -292,17 +554,6 @@ const Scene = ({ scrollProgress, targetScrollProgress, cameraMode }) => {
       />
 
       <Suspense fallback={null}>
-        <Environment
-          background={false}
-          files={[
-            "/cubemap/px.webp",
-            "/cubemap/nx.webp",
-            "/cubemap/py.webp",
-            "/cubemap/ny.webp",
-            "/cubemap/pz.webp",
-            "/cubemap/nz.webp",
-          ]}
-        />
         <MapModel />
         <VillagerModel
           name="Villager 1"
@@ -325,22 +576,45 @@ const Scene = ({ scrollProgress, targetScrollProgress, cameraMode }) => {
           modalTitle="Pesan #3"
           modalBody={<SecretNoteThree />}
         />
-        <ChestModel />
-        {/* Debugger: Visualize the path in Red */}
-        <PathDebugger curve={cameraCurve} />
+        <VillagerModel
+          name="Villager 4"
+          initialPosition={[-25.8, 15, 0]}
+          initialRotation={[0, 1.6, 0]}
+          modalTitle="Pesan #4"
+          modalBody={<SecretNoteFour />}
+          onInteract={() => {
+            if (onStartCinematic) onStartCinematic();
+          }}
+        />
+        <ChestModel triggerOpen={cinematicFinished} />
+        {/* <PathDebugger curve={cameraCurve} /> */}
       </Suspense>
 
-      {/* Optimization: Ultra-low settings for N8AO, enable MipmapBlur for Bloom */}
-      <EffectComposer disableNormalPass multisampling={0}>
-        <N8AO
-          halfRes
-          aoSamples={2}
-          denoiseSamples={1}
-          aoRadius={2}
-          intensity={1}
-          distanceFalloff={2}
+      <Environment preset="sunset" background={false} />
+
+      <EffectComposer disableNormalPass={false} multisampling={4}>
+        <SSAO
+          radius={ssaoRadius}
+          intensity={ssaoIntensity}
+          luminanceInfluence={ssaoLumInfluence}
+          color={ssaoColor}
         />
-        <Bloom luminanceThreshold={1.2} intensity={0.5} mipmapBlur={true} />
+        <Bloom
+          luminanceThreshold={bloomThreshold}
+          intensity={bloomIntensity}
+          mipmapBlur
+          radius={bloomRadius}
+        />
+        <ToneMapping
+          adaptive={true}
+          resolution={256}
+          middleGrey={tmMiddleGrey}
+          maxLuminance={tmMaxLum}
+          averageLuminance={tmAvgLum}
+          adaptationRate={1.0}
+        />
+
+        <BrightnessContrast brightness={brightness} contrast={contrast} />
       </EffectComposer>
     </>
   );

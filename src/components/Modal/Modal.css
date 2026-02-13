@@ -30,7 +30,7 @@
   padding: 6px; /* Inner spacing between border and content */
 
   image-rendering: chat; /* Pixelated rendering */
-  font-family: "Courier New", Courier, monospace; /* Monospace/Pixel fallback */
+  font-family: "Minecraft", "Courier New", Courier, monospace;
 }
 
 .modal-header {
@@ -152,7 +152,7 @@
     inset 3px 3px 0px rgba(255, 255, 255, 0.4),
     inset -3px -3px 0px rgba(0, 0, 0, 0.4);
   color: #ffffff;
-  font-family: "Courier New", Courier, monospace;
+  font-family: "Minecraft", "Courier New", Courier, monospace;
   font-size: 1rem;
   font-weight: bold;
   padding: 12px 24px;
@@ -199,7 +199,7 @@
   padding: 12px 16px;
   margin: 8px 0;
   cursor: pointer;
-  font-family: "Courier New", Courier, monospace;
+  font-family: "Minecraft", "Courier New", Courier, monospace;
   font-size: 0.95rem;
   color: #333;
   display: block;
@@ -235,7 +235,7 @@
   border-bottom: 2px solid #555;
   border-right: 2px solid #555;
   color: #ffffff;
-  font-family: "Courier New", Courier, monospace;
+  font-family: "Minecraft", "Courier New", Courier, monospace;
   font-size: 1rem;
   padding: 10px;
   margin-top: 8px;

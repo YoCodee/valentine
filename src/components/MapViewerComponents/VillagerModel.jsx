@@ -13,6 +13,7 @@ function VillagerModel({
   initialRotation = [0, 0, 0],
   modalTitle = "Villager says:",
   modalBody = "Hello!",
+  onInteract, // Optional custom interaction
 }) {
   const group = useRef();
   const { scene, animations } = useGLTF("/3d/Villager.glb");
@@ -71,6 +72,12 @@ function VillagerModel({
       if (action) {
         action.reset().fadeIn(0.2).play();
       }
+    }
+
+    // Custom Interaction (Overrides Default Modal)
+    if (onInteract) {
+      onInteract();
+      return;
     }
 
     // Open Modal with custom content
