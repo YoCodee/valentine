@@ -35,7 +35,7 @@ const GameCanvas = React.memo(
           gl.outputColorSpace = SRGBColorSpace;
         }}
       >
-        <Stats />
+
         <PerspectiveCamera makeDefault fov={50} position={[0, 0, 0]} />
 
         <Scene
