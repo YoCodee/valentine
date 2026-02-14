@@ -213,7 +213,7 @@ export default function MapViewer() {
         zIndex: 0,
       }}
     >
-      <Leva />
+      <Leva hidden />
       <LoadingScreen />
       <Modal />
 

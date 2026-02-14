@@ -5,7 +5,7 @@ const infoMeData = {
   one: {
     content: [
       {
-        header: "💌 About This World",
+        header: " About This World",
         paragraphs: [
           "Dunia Minecraft kecil ini dibuat khusus untuk menemani perjalanan Valentine tahun ini. Semoga kamu suka ya! ❤️",
           "Jangan lupa untuk berinteraksi dengan Villager dan temukan kejutan di puncaknya.",
@@ -49,9 +49,7 @@ const Info = () => {
   return (
     <>
       <div className="p-3">
-        <Button href="https://youtu.be/lf9ZBsi24m4" type={"link"}>
-          Learn how to create this portfolio!
-        </Button>
+  
 
         {data.content.map((section, index) => (
           <div key={index} className="mb-3">
